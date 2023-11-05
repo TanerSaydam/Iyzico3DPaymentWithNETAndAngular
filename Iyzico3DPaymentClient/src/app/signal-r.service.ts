@@ -24,4 +24,9 @@ export class SignalRService {
       updateStatus(status);
     });
   }
+
+  public registerTransactionId(transactionId: string) {
+    this.hubConnection.invoke('RegisterTransactionId', transactionId)
+      .catch((err:any) => console.error('Error while registering transaction ID: ', err));
+  }
 }

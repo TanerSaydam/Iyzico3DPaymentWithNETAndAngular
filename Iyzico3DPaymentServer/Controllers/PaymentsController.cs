@@ -4,6 +4,7 @@ using Iyzipay.Model;
 using Iyzipay.Request;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Transactions;
 
 namespace Iyzico3DPaymentServer.Controllers;
 
@@ -12,15 +13,15 @@ namespace Iyzico3DPaymentServer.Controllers;
 public class PaymentsController : ControllerBase
 {
     private Options options;
-    private readonly IHubContext<MessageHub> _hubContext;
+    private readonly SignalRService _signalRService;
 
-    public PaymentsController(IHubContext<MessageHub> hubContext)
+    public PaymentsController(SignalRService signalRService)
     {
         options = new();
         options.ApiKey = "sandbox-jJ9iwVPKmLVPhHy9quhLMsdqvDLQY0J9";
         options.SecretKey = "sandbox-q4dk0SrgBiNf9mr2zCCU5PuHQwMYGxKv";
         options.BaseUrl = "https://sandbox-api.iyzipay.com";
-        _hubContext = hubContext;
+        _signalRService = signalRService;
     }
 
     [HttpGet]
@@ -28,7 +29,7 @@ public class PaymentsController : ControllerBase
     {
         CreatePaymentRequest request = new CreatePaymentRequest();
         request.Locale = Locale.TR.ToString();
-        request.ConversationId = "123456789";
+        request.ConversationId = Guid.NewGuid().ToString();
         request.Price = "1";
         request.PaidPrice = "1.2";
         request.Currency = Currency.TRY.ToString();
@@ -110,7 +111,7 @@ public class PaymentsController : ControllerBase
 
         ThreedsInitialize threedsInitialize = ThreedsInitialize.Create(request, options);
 
-        return Ok(new { Content = threedsInitialize.HtmlContent });
+        return Ok(new { Content = threedsInitialize.HtmlContent, ConversationId = request.ConversationId });
     }
 
     [HttpPost]
@@ -123,7 +124,7 @@ public class PaymentsController : ControllerBase
             ConversationData: form["conversationData"],
             MDStatus: form["mdStatus"]);
 
-        await _hubContext.Clients.All.SendAsync("ReceivePaymentStatus", callbackData);
+        await _signalRService.SendPaymentStatus(callbackData.ConversationId, callbackData);
 
         return Ok(callbackData);
     }

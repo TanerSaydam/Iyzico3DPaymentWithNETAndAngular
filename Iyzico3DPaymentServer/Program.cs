@@ -1,3 +1,4 @@
+using Iyzico3DPaymentServer;
 using Iyzico3DPaymentServer.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.Services.AddCors(configure =>
             .AllowCredentials()
             .SetIsOriginAllowed(policy => true));
 });
+
+builder.Services.AddScoped<SignalRService>();
 
 builder.Services.AddSignalR();
 
