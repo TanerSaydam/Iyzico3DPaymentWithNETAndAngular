@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\Iyzico3DPaymentServer.props" />
+</Project>
